@@ -3,6 +3,7 @@ from fastapi.encoders import jsonable_encoder
 from app.schemas.product import Product, ProductUpdate
 from app.crud.product import (create_product, get_single_product,
                               get_all_products, update, delete)
+from app.api.deps import is_valid_objectID
 router = APIRouter()
 
 @router.post("/", response_model=Product, status_code=status.HTTP_201_CREATED,
@@ -27,6 +28,11 @@ async def get_product(
     """
     Searches for a product based on its ID
     """
+    if not await is_valid_objectID(product_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid product ID"
+        )
     product = await get_single_product(product_id)
     if not product:
         raise HTTPException(
@@ -48,7 +54,7 @@ async def get_products():
         )
     return products
 
-@router.put("/{product_id}", response_model=Product, status_code=status.HTTP_200_OK)
+@router.put("/{product_id}", response_model=ProductUpdate, status_code=status.HTTP_200_OK)
 async def update_product(
     *,
     product_id: str,
@@ -57,15 +63,26 @@ async def update_product(
     """
     updates a product
     """
+    if not await is_valid_objectID(product_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid project ID"
+        )
     product = await get_single_product(id=product_id)
     if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="The product with given ID was not found."
         )
-    print("passed")
-    updated = await update(id=id, product_data=update_in)
-    return updated
+    product = jsonable_encoder(update_in)
+    updated = await update(id=product_id, product_data=product)
+    if not updated:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="There was a conflict while updateing the data"
+        )
+        
+    return product
     
     
 @router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -76,6 +93,11 @@ async def delete_product(
     """
     deletes a product
     """
+    if not await is_valid_objectID(product_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid product ID"
+        )
     product = await get_single_product(id=product_id)
     if not product:
         raise HTTPException(

@@ -10,7 +10,7 @@ class Product(BaseModel):
     unit: str
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "name": "Tomatoes",
                 "description": "Fresh from the farm",
@@ -28,7 +28,7 @@ class ProductUpdate(BaseModel):
     unit: Optional[str]
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "name": "Tomatoes",
                 "description": "Fresh from the farm",
